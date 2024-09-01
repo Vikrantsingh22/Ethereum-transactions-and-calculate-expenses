@@ -4,16 +4,16 @@ const transactionModel = require("../models/Transactions");
 const axios = require("axios");
 const fetchTransaction = async (req, res) => {
   const { walletAddress } = req.body;
-  const testaddress = "0xce94e5621a5f7068253c42558c147480f38b5e0d";
 
   const session = await mongoose.startSession();
+  if (!walletAddress || !/^0x[a-fA-F0-9]{40}$/.test(walletAddress)) {
+    return res.status(400).json({ message: "Invalid wallet address" });
+  }
   try {
     session.startTransaction();
-    console.log(walletAddress);
     const response = await axios.get(
       `https://api.etherscan.io/api?module=account&action=txlist&address=${walletAddress}&startblock=0&endblock=99999999&page=1&offset=10&sort=asc&apikey=${process.env.ETHERSCAN_API_KEY}`
     );
-    console.log(response.data);
     if (response.data.status === "1") {
       const PreExistingWalletAddress = await addressModel.findOne({
         walletAddress: walletAddress,
@@ -70,6 +70,10 @@ const fetchTransaction = async (req, res) => {
     await session.abortTransaction();
     session.endSession();
     console.log(err);
+    res.status(500).json({
+      message: "An error occurred while processing the transaction",
+      error: err.message,
+    });
   }
 };
 

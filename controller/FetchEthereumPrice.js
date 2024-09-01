@@ -24,11 +24,13 @@ const CoinGeckoRequestAndUpdate = async (req, res) => {
   const response = await axios.get(
     `https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=inr`
   );
-  if (response.status === 200) {
+  if (response.status === 200 && response.data.ethereum) {
     const updatedPrice = await EtherModel.updateOne(
       { coinName: "Ethereum" },
       { coinPrice: response.data.ethereum.inr }
     );
+  } else {
+    console.error("Unexpected response format from CoinGecko:", response.data);
   }
 };
 module.exports = fetchEthereumPrice;
